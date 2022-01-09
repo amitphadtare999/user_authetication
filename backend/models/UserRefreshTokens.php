@@ -14,7 +14,7 @@ use Yii;
  * @property string $urf_user_agent
  * @property string $urf_created UTC
  */
-class User extends \yii\db\ActiveRecord
+class UserRefreshTokens extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
@@ -51,21 +51,5 @@ class User extends \yii\db\ActiveRecord
             'urf_user_agent' => 'Urf User Agent',
             'urf_created' => 'Urf Created',
         ];
-    }
-
-    public static function findIdentityByAccessToken($token, $type = null) {
-        return static::find()
-            ->where(['userID' => (string) $token->getClaim('uid') ])
-            ->andWhere(['<>', 'status', 'inactive'])  //adapt this to your needs
-            ->one();
-    }
-
-    public function afterSave($isInsert, $changedOldAttributes) {
-        // Purge the user tokens when the password is changed
-        if (array_key_exists('usr_password', $changedOldAttributes)) {
-            \backend\models\UserRefreshTokens::deleteAll(['urf_userID' => $this->userID]);
-        }
-
-        return parent::afterSave($isInsert, $changedOldAttributes);
     }
 }
