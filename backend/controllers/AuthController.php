@@ -13,6 +13,16 @@ class AuthController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+
+        // remove authentication filter
+        $auth = $behaviors['authenticator'];
+        unset($behaviors['authenticator']);
+
+        // add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::class,
+        ];
+
         $behaviors['authenticator'] = [
             'class' => \sizeg\jwt\JwtHttpBearerAuth::class,
             'except' => [
@@ -85,7 +95,7 @@ class AuthController extends Controller
     public function actionLogin()
     {
         $model = new LoginForm();
-
+        Yii::error(Yii::$app->request->getBodyParams());
         if ($model->load(Yii::$app->request->getBodyParams(), '') && $model->login()) {
             $user = Yii::$app->user->identity;
             $token = $this->generateJwt($user);
@@ -97,6 +107,8 @@ class AuthController extends Controller
                 'token' => (string) $token,
             ];
         } else {
+            $response = Yii::$app->response;
+            $response->statusCode = 400;
             return $model->getFirstErrors();
         }
     }
