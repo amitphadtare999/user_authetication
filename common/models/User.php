@@ -70,9 +70,11 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * {@inheritdoc}
      */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
+    public static function findIdentityByAccessToken($token, $type = null) {
+        return static::find()
+            ->where(['userID' => (string) $token->getClaim('uid') ])
+            ->andWhere(['<>', 'usr_status', 'inactive'])  //adapt this to your needs
+            ->one();
     }
 
     /**
@@ -209,5 +211,20 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    /**
+     * @param $isInsert
+     * @param $changedOldAttributes
+     * @return void
+     * Removing all refresh tokens if user password is changed.
+     */
+    public function afterSave($isInsert, $changedOldAttributes) {
+        // Purge the user tokens when the password is changed
+        if (array_key_exists('usr_password', $changedOldAttributes)) {
+            \backend\models\UserRefreshTokens::deleteAll(['urf_userID' => $this->userID]);
+        }
+
+        return parent::afterSave($isInsert, $changedOldAttributes);
     }
 }

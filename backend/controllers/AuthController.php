@@ -146,4 +146,9 @@ class AuthController extends Controller
         }
     }
 
+    public function actionHello()
+    {
+        return $this->asJson(['message' => 'Welcome Amit...']);
+    }
+
 }
